@@ -1,5 +1,8 @@
 #py 函数
 
+#生成器、迭代器、装饰器
+
+
 #=============================================闭包=====================================================
 #闭包
 '''
@@ -39,16 +42,125 @@ print(res_add_ten(10))     #add_ten()获得了参数
 print(add_func()(10))
 
 '''
+# 柯里化   可以拆分函数
+'''
+将原来接受两个参数的函数变成新的接受一个参数的函数的过程，新的函数返回一个以原有第二个参数为参数的函数。
+将fnu(x,y)变成fn(x)(y)
+'''
+def add(x,y,z):
+    return x+y+z
+#add(4)(5,6)
+def add(x):
+    def inner(y,z):
+        return x+y+z
+    return inner
+print(add(4)(5,6))
+
+##这个例子很关键！！！
+#add(4)(5)(6)
+def add(x):
+    def outinner(y):
+        def ininner(z):
+            print(z)    #z=6
+            return x+y+z
+        return ininner
+    return outinner
+print(add(4)(5)(6))   # 从外往内，依次调用
+#add(4,5)(6)
+
+
 #==================================================装饰器========================================================
 #装饰器
 '''
 什么是装饰器？：python中的一种设计模式，允许用户在不修改函数本身的情况下向函数增加新的功能。
 怎么用？：定义在被装饰函数的前面   @装饰函数； 带有内部函数的包装函数
-有什么用（用来干什么）？：说白了就是装饰
+有什么用（用来干什么）？：说白了就是装饰，用来装饰函数或类
 什么时候用？：
+
+def 装饰函数：
+    def wrapper():
+        装饰处理
+        被装饰函数调用
+        return 处理结果
+    return wrapper      #外部函数返回内部函数是为了，通过外部函数接口访问到内部函数
+     
+@装饰函数       #此处运行机制：将下面的函数名作为参数（实参）传入， xyz=装饰函数(xyz) #两边的xyz不是同一个东西
+def 被装饰函数：      def xyz():                      #左边的xyz指向了wrapper里的被装饰函数（闭包自由变量绑定的概念）
+    pass               pass                         #右边的warpper指向外面的被装饰函数
+    
+
+
+#非业务代码写在业务代码中，不好
+
+# 实参传递，关键字(**kwargs)和位置传参（*args）
 '''
 '''
-示例
+2022114->
+def add(x,y,*z):
+    return x+y+sum(z)
+
+def logger(fn,*args,**kwargs):   #可变参数
+    print('装饰前')
+    print('{} function called. {} {}'.format(fn.__name__, args, kwargs))
+    #调用被装饰函数
+    res=fn(*args,**kwargs) #参数解构，*args变成位置传参，**kwargs变成关键字传参。如果不加*和**，传的就是元祖或字典，add函数就无法接收
+    print('装饰后')
+    return res
+logger(add,1,y=10)
+
+柯里化后：
+def logger(fn):
+    def wrapper(*arg,**kwarg):
+        print('{} function called. {} {}'.format(fn.__name__, args, kwargs))
+        #调用被装饰函数
+        res=fn(*args,**kwargs) #参数解构，*args变成位置传参，**kwargs变成关键字传参。如果不加*和**，传的就是元祖或字典，add函数就无法接收
+        print('装饰后')
+        return res
+    return wrapper
+    
+add=logger(add)
+result=add(1,2)
+print(result)
+    
+写成装饰器模式
+def logger(fn):      #装饰函数   装饰器函数
+    def wrapper(*arg,**kwarg):
+        print('{} function called. {} {}'.format(fn.__name__, args, kwargs))
+        #调用被装饰函数
+        res=fn(*args,**kwargs) #参数解构，*args变成位置传参，**kwargs变成关键字传参。如果不加*和**，传的就是元祖或字典，add函数就无法接收
+        print('装饰后')
+        return res
+    return wrapper
+                
+                # 学习期间一定要把等价式写在后面   此处很重要
+@logger         #无参装饰器, 是一种语法糖 .本质上等效为 一个参数的函数   #等价于 add=logger(add)<=>add=wrapper
+def add(x,y,*z):
+    return x+y+sum(z)
+<-2022114    
+'''
+#写个记录函数执行时长的装饰器
+import datetime
+import time
+def logger(fn):
+    def wrapper(*args, **kwargs):
+        start=datetime.datetime.now()
+        res = fn(*args, **kwargs)
+        use_time=(datetime.datetime.now() - start).total_seconds()  #total_seconds()将时间记为秒
+        print('{} took {}s'.format(fn.__name__, use_time))
+        return res
+
+    return wrapper
+
+@logger  #add=logger(add)<=>add=wrapper
+def add(x, y, *z):
+    time.sleep(2)
+    return x + y + sum(z)
+print(add(1,2))
+
+
+
+'''
+装饰器示例
 #定义一个普通函数，返回一个字符串；再定义一个装饰函数，将普通函数的返回字符串大写。
 #普通函数
 def low_func():

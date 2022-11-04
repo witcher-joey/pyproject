@@ -18,3 +18,6 @@ print(type(s.isEmpty()))
 def po_juice():
     return 1==1
 print(type(po_juice()))
+
+tu=(1,)
+print(tu)
