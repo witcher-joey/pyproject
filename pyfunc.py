@@ -46,7 +46,8 @@ print(add_func()(10))
 '''
 将原来接受两个参数的函数变成新的接受一个参数的函数的过程，新的函数返回一个以原有第二个参数为参数的函数。
 将fnu(x,y)变成fn(x)(y)
-'''
+
+#示例
 def add(x,y,z):
     return x+y+z
 #add(4)(5,6)
@@ -67,6 +68,8 @@ def add(x):
     return outinner
 print(add(4)(5)(6))   # 从外往内，依次调用
 #add(4,5)(6)
+'''
+
 
 
 #==================================================装饰器========================================================
@@ -136,8 +139,8 @@ def logger(fn):      #装饰函数   装饰器函数
 @logger         #无参装饰器, 是一种语法糖 .本质上等效为 一个参数的函数   #等价于 add=logger(add)<=>add=wrapper
 def add(x,y,*z):
     return x+y+sum(z)
-<-2022114    
-'''
+    
+    
 #写个记录函数执行时长的装饰器
 import datetime
 import time
@@ -151,16 +154,20 @@ def logger(fn):
 
     return wrapper
 
-@logger  #add=logger(add)<=>add=wrapper
-def add(x, y, *z):
+@logger 
+def add(x, y, *z):       #add=logger(add)<=>add=wrapper
     time.sleep(2)
     return x + y + sum(z)
 print(add(1,2))
+    
+<-2022114    
+'''
 
 
 
 '''
-装饰器示例
+装饰器示例--无参装饰器
+
 #定义一个普通函数，返回一个字符串；再定义一个装饰函数，将普通函数的返回字符串大写。
 #普通函数
 def low_func():
@@ -200,6 +207,111 @@ def low_func():
 print('装饰器的写法：',low_func())  #被装饰器装饰后，可直接调用函数本身得到装饰后的结果
 
 '''
+#带参装饰器--2022115
+'''
+每次学习新知识之前，都要提前问自己些问题。
+1、这个是什么（what）？2、这个用来干什么，怎么用（how）？3、这个在哪里用（where）？4、这个和现有知识如何产生联系？
+'''
+'''
+#文档字符串   函数语句块的第一句   可使用特殊属性__doc__访问这个文档
+干什么：描述函数功能、参数含义
+如何使用：
+def add():
+    """
+    add document#第一行
+    x int:
+    y int:
+    return int:
+    """
+#add.__name__  #在pycharm控制台中输出需要用print
+print(add.__name__)
+print(add.__doc__)
+help(add)
+'''
+
+# 要使add.__name__得到的是add 而不是wrapper,使用覆盖；；属性拷贝
+import datetime
+import time
+
+
+# wrapper.__name__=fn.__name__
+# wrapper.__doc__=fn.__doc__
+# 覆盖
+# def copy_properties(dst, src):
+#     dst.__name__ = src.__name__  # dst <- wrapper; src <- fn
+#     dst.__doc__ = src.__doc__
+#将上述注释柯里化
+'''
+def copy_properties(src):
+    def _copy(dst):
+        dst.__name__ = src.__name__  # dst <- wrapper; src <- fn  #闭包 记住dst
+        dst.__doc__ = src.__doc__
+        return dst   #如果不返回，则wrapper=None
+    return _copy
+
+def logger(fn):
+                          #cop_properties(fn)是一个整体   wrapper=cop_properties(fn)(wrapper)=》wrapper=wrapper
+    @copy_properties(fn)  # 等价于 wrapper=cop_properties(fn)(wrapper) 《==》_copy(fn) 带参装饰器
+    def wrapper(*args, **kwargs): #执行过程：将wrapper作为参数传入copy_properties(fn),之后再将结果赋给wrapper，如上
+        """wrapper function"""
+        start=datetime.datetime.now()
+        res = fn(*args, **kwargs)
+        use_time=(datetime.datetime.now() - start).total_seconds()  #total_seconds()将时间记为秒
+        print('{} took {}s'.format(fn.__name__, use_time))
+        return res
+    #copy_properties(wrapper, fn)    #调用后，全局（外部）print(add.__name__和add.__doc__时就会显示外部的add)
+                                    #从而将内部wrapper隐藏起来。
+    #cop_properties(wrapper)(fn)      #_copy(fn)  将此调用方法写到上面，写成装饰模式
+    #copy_properties(fn)(wrapper)     #将copy_properties(dst)换成copy_properties(src)后
+    return wrapper
+
+@logger
+def add(x, y, *z):       #add=logger(add)<=>add=wrapper
+    """add function"""
+    time.sleep(2)
+    return x + y + sum(z)
+
+print(add.__name__,':',add.__doc__)
+'''
+
+#logger设定一个阈值，对执行时长超过阈值的记录一下
+def copy_properties(src):
+    def _copy(dst):
+        dst.__name__ = src.__name__  # dst <- wrapper; src <- fn  #闭包 记住dst
+        dst.__doc__ = src.__doc__
+        return dst   #如果不返回，则wrapper=None
+    return _copy
+
+def logger(duration): #思考：如果在logger中继续添加参数（有明确含义的业务参数），该怎么解决？
+    def _logger(fn):
+        # cop_properties(fn)是一个整体   wrapper=cop_properties(fn)(wrapper)=》wrapper=wrapper
+        @copy_properties(fn)  # 等价于 wrapper=cop_properties(fn)(wrapper) 《==》_copy(fn) 带参装饰器
+        def wrapper(*args, **kwargs):  # 执行过程：将wrapper作为参数传入copy_properties(fn),之后再将结果赋给wrapper，如上
+            """wrapper function"""
+            start = datetime.datetime.now()
+            res = fn(*args, **kwargs)
+            use_time = (datetime.datetime.now() - start).total_seconds()  # total_seconds()将时间记为秒
+            if use_time > duration:
+                print('{} took {}s. Slow'.format(fn.__name__, use_time))
+            else:
+                print('{} took {}s fast'.format(fn.__name__, use_time))
+            return res
+        # copy_properties(wrapper, fn)    #调用后，全局（外部）print(add.__name__和add.__doc__时就会显示外部的add)
+        # 从而将内部wrapper隐藏起来。
+        # cop_properties(wrapper)(fn)      #_copy(fn)  将此调用方法写到上面，写成装饰模式
+        # copy_properties(fn)(wrapper)     #将copy_properties(dst)换成copy_properties(src)后
+        return wrapper
+    return _logger
+
+@logger(5)  #add=logger(5)(add)=>add=_logger(add)=>add=wrapper=>add(x,y,*z)=wrapper(x,y,*z)
+def add(x, y, *z):  # add=logger(add)<=>add=wrapper
+    """add function"""
+    time.sleep(2)
+    return x + y + sum(z)
+
+add(4,5)             #调用函数本身即可
+
+
 
 #装饰器函数中接收参数（内部嵌套函数接受参数）
 '''
@@ -207,6 +319,7 @@ print('装饰器的写法：',low_func())  #被装饰器装饰后，可直接调
 '''
 #写一个普通函数格式化输出一串字符（一句话），不返回，直接打印；写一个装饰函数在原函数的基础上再加一句话。
 #结果写法：先写装饰函数，再写原函数；思考写法：先写原函数，再写装饰函数
+'''
 def print_full_name(first_name,last_name,country):
     print("I am {} {}. I love to learn".format(first_name,last_name,country))
 
@@ -223,3 +336,4 @@ print_full_name('zhou','joey','San')
 
 #I am zhou joey. I love to learn
 #I live in San
+'''
