@@ -22,4 +22,7 @@ print(type(po_juice()))
 tu=(1,)
 print(tu)
 
+#移到hdd上后的测试
+hdd = "移动到hdd后的测试"
+print(hdd)
 
