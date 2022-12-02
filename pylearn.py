@@ -20,3 +20,19 @@ add(*(4,5)) 调用时，对实参加入*；  **{} 仅用于字典 ，等价于k=
 *结构位置传参，**结构关键字传参
 
 '''
+
+#文件
+'''
+with open('pi_digits.txt') as pd:
+    content = pd.read()        #会读出文件全部内容
+print('-----------')
+print(content)
+print('-----------')
+#删除末尾空行
+#print(content.rstrip())
+'''
+#逐行读取,使用for循环;;  .strip()消除空白行
+with open('pi_digits.txt') as pd:  #with获取的文件对象只在当前with块中
+    for str in pd:
+        print(str.strip())
+        print('===')

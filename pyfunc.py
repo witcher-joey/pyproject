@@ -15,6 +15,7 @@ def 外部函数（）：
         处理（自由）变量
         return 嵌套函数处理结果
     return 嵌套函数       #此处不带括号，返回的是嵌套函数本身。因为要从外部访问内部的嵌套函数，所以在这里返回。外部函数就是接口。
+
 闭包=变量+嵌套函数
 
 '''
@@ -42,7 +43,7 @@ print(res_add_ten(10))     #add_ten()获得了参数
 print(add_func()(10))
 
 '''
-# 柯里化   可以拆分函数
+# 柯里化   可以拆分函数    解决装饰器最好的武器
 '''
 将原来接受两个参数的函数变成新的接受一个参数的函数的过程，新的函数返回一个以原有第二个参数为参数的函数。
 将fnu(x,y)变成fn(x)(y)
@@ -75,11 +76,13 @@ print(add(4)(5)(6))   # 从外往内，依次调用
 #==================================================装饰器========================================================
 #装饰器
 '''
+总结：
 什么是装饰器？：python中的一种设计模式，允许用户在不修改函数本身的情况下向函数增加新的功能。
+构成装饰器的条件：有闭包（就有自由变量的绑定）
 怎么用？：定义在被装饰函数的前面   @装饰函数； 带有内部函数的包装函数
 有什么用（用来干什么）？：说白了就是装饰，用来装饰函数或类
 什么时候用？：
-
+怎么写？：先写被装饰函数，再写装饰函数（装饰器），最后调整位置。
 def 装饰函数：
     def wrapper():
         装饰处理
@@ -273,16 +276,18 @@ def add(x, y, *z):       #add=logger(add)<=>add=wrapper
 
 print(add.__name__,':',add.__doc__)
 '''
+'''
 
+#必须驾驭下面的内容
 #logger设定一个阈值，对执行时长超过阈值的记录一下
-def copy_properties(src):
+def copy_properties(src):   #覆盖wrapper的名，用add覆盖（伪装）
     def _copy(dst):
         dst.__name__ = src.__name__  # dst <- wrapper; src <- fn  #闭包 记住dst
         dst.__doc__ = src.__doc__
-        return dst   #如果不返回，则wrapper=None
+        return dst   #如果不返回，则wrapper=None；返回后fn.__name__=add
     return _copy
-
-def logger(duration): #思考：如果在logger中继续添加参数（有明确含义的业务参数），该怎么解决？
+                     #output 函数定义
+def logger(duration, output = lambda name, usetime: print("{} tooks {}s slow".format(name, usetime))): #思考：如果在logger中继续添加参数（有明确含义的业务参数），该怎么解决？
     def _logger(fn):
         # cop_properties(fn)是一个整体   wrapper=cop_properties(fn)(wrapper)=》wrapper=wrapper
         @copy_properties(fn)  # 等价于 wrapper=cop_properties(fn)(wrapper) 《==》_copy(fn) 带参装饰器
@@ -291,11 +296,14 @@ def logger(duration): #思考：如果在logger中继续添加参数（有明确
             start = datetime.datetime.now()
             res = fn(*args, **kwargs)
             use_time = (datetime.datetime.now() - start).total_seconds()  # total_seconds()将时间记为秒
+            #如果超出阈值，记录一下，为了灵活，对超出阈值的信息用一个函数记录
             if use_time > duration:
-                print('{} took {}s. Slow'.format(fn.__name__, use_time))
-            else:
-                print('{} took {}s fast'.format(fn.__name__, use_time))
-            return res
+                output(fn.__name__,use_time)  #记录函数调用
+            # if use_time > duration:   #来自外部的参数，外面用带参装饰器解决
+            #     print('{} took {}s. Slow'.format(fn.__name__, use_time))
+            # else:
+            #     print('{} took {}s fast'.format(fn.__name__, use_time))
+            # return res
         # copy_properties(wrapper, fn)    #调用后，全局（外部）print(add.__name__和add.__doc__时就会显示外部的add)
         # 从而将内部wrapper隐藏起来。
         # cop_properties(wrapper)(fn)      #_copy(fn)  将此调用方法写到上面，写成装饰模式
@@ -310,7 +318,7 @@ def add(x, y, *z):  # add=logger(add)<=>add=wrapper
     return x + y + sum(z)
 
 add(4,5)             #调用函数本身即可
-
+'''
 
 
 #装饰器函数中接收参数（内部嵌套函数接受参数）
@@ -337,3 +345,59 @@ print_full_name('zhou','joey','San')
 #I am zhou joey. I love to learn
 #I live in San
 '''
+
+#属性更新--20221111
+'''
+from functools import wraps
+@wraps(fn)             #wraps必须返回一个单参函数；；用来解决文档、名称等问题
+def 装饰函数
+'''
+
+#装饰器进阶--20221125
+'''
+思考问题：（这几个问题搞清楚，装饰器就ok了）
+1、add函数、sub函数执行吗？logger什么时候执行？logger执行过几次？
+2、wraps装饰器执行过几次？
+3、wrapper的__name__等属性被覆盖过几次？
+4、add.__name__打印什么名称？
+5、sub.__name__打印什么名称？
+
+尝试回答：（不能想当然的回答，要思考、推理、分析）
+1、执行过；装饰的时候执行；两次
+正确回答{没有执行（因为没有调用()）；}
+2、两次
+3、两次
+4、add
+5、sub
+
+'''
+
+import  datetime
+import time
+from functools import wraps
+
+#定义一个装饰函数,为被装饰函数添加执行的时间
+def logger(fn):  #fn用来接收被装饰函数
+    @wraps(fn)  #用来属性更新,从functools导入
+    def wrapper(*args,**kwargs):  #用来接收被装饰函数的参数
+                                 #为什么此处来接收被装饰函数参数？只需要思考logger(fn,*args,**kwargs)柯里化就明白了。
+                                 #logger执行时，临时创建内部函数对象，如同局部变量一样
+        start=datetime.datetime.now()
+        ret=fn(*args,**kwargs)#这里的*和**是表示参数解构，与上面的含义不同；上面表示接收位置参数和关键字传参。原函数（被装饰函数）
+                              #闭包，原来的fn（add和sub），外部函数的局部变量
+        use_time=(datetime.datetime.now()-start).total_seconds()
+        print(use_time)
+        return ret     #返回的是被装饰函数
+    return wrapper
+
+#定义被装饰函数
+@logger
+def add(x,y):
+    return x+y
+
+@logger         #函数的每一次调用都是独立的
+def sub(x,y):
+    return x-y
+
+print(add.__name__,add.__doc__)
+print(sub.__name__,sub.__doc__)
