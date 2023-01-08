@@ -1,9 +1,9 @@
 from my_data_struct import data_struct
-from my_data_struct.data_struct import Stack #这才是正确的写法；包名.包中文件名.文件中的类名; import classname/method
+from my_data_struct.data_struct import myStack #这才是正确的写法；包名.包中文件名.文件中的类名; import classname/method
 # print('this is first test python file!')
 # print('all is well')
 
-s=Stack()
+s=myStack()
 
 print(s.size())
 s.push(1)
@@ -25,4 +25,12 @@ print(tu)
 #移到hdd上后的测试
 hdd = "移动到hdd后的测试"
 print(hdd)
+if hdd:
+    print("if hdd not none:",hdd)
+
+import requests
+
+r = requests.get("https://www.shanghairanking.cn/rankings/bcur/2022")
+print(r.status_code)
+
 

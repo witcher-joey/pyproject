@@ -1,5 +1,5 @@
 #栈  先进先出 初始化栈  判断栈为空  入栈 出栈 栈顶元素 栈大小
-class Stack:
+class myStack:
     #初始化栈（创建栈）
     def __init__(self):
         self.items=[]
