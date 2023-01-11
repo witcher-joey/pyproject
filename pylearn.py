@@ -21,27 +21,20 @@ add(*(4,5)) 调用时，对实参加入*；  **{} 仅用于字典 ，等价于k=
 *结构位置传参，**结构关键字传参
 
 '''
-#=========================================================文件=========================================
-#文件
+#=======================输入输出
 '''
-with open('pi_digits.txt') as pd:
-    content = pd.read()        #会读出文件全部内容
-print('-----------')
-print(content)
-print('-----------')
-#删除末尾空行
-#print(content.rstrip())
-'''
-'''
-#逐行读取,使用for循环;;  .strip()消除空白行
-with open('pi_digits.txt') as pd:  #with获取的文件对象只在当前with块中
-    for str in pd:
-        print(str.strip())
-        print('===')
-'''
+2023110
+输出：
+1、格式化输出：
+   1）格式化字符字面值: f'str{var1}{var2}...'
+      var1 = '2023'
+      var2 = '1'
+      print(f'this is {var1} {var2}')
+   2）str.format(): print('{0} {1}...'.format(var1,var2,...))
+     a、大括号数字表示位置传参
+     b、还可以用变量名实现关键字传参
+2、格式调整
+   1）“：” 后面写整数，表示该字段最小字符宽度。对齐时很有用
+     
 
-import os
-print(os.getcwd())
-with open('/media/joey/hdd1/pyproject/pyproject/testfile.txt', 'w') as f:
-    f.write("first write")
-    f.close()
+'''
